@@ -46,3 +46,14 @@ Revert the validation helper/branch, import guard and detector fallback, and adj
 ## Review and supersession history
 
 2026-10-05: recorded before implementation. JJ disposition pending; silence is not acceptance.
+
+### 2026-10-05 — JJ acceptance
+
+- Current status: **accepted**.
+- Disposition by: JJ; acceptance of the decision as reviewed at implementation commit `303387389d30269293a5b6c7b9385a1fcf6b7fbc`.
+- Recorded provenance: `/Users/jjatkinson/Documents/Projects/astra-orchestrator/.astra/preparations/20261005-slickdeals-fix1/decision-acceptance.md`. The hub record quotes JJ: “I accept both. Should i tell the agent to continue or are we spawning a new agent again?”
+- In-session confirmation: JJ explicitly said, “I accept D01 and D02,” and instructed the agent to read that record, append acceptance, update the handoff and commit the documentation.
+- Accepted scope: D01 lexical numeric boundaries and D02 atomic malformed-import rejection, including suppressed keyword matching for explicitly malformed saved lists while price-only signals remain.
+- This is acceptance, not supersession. Original rationale, alternatives and initial in-flight status/history above are preserved; this dated disposition establishes the current accepted status.
+- Tested A and B script bytes/hashes remain unchanged. The documentation commit does not replace `303387389d30269293a5b6c7b9385a1fcf6b7fbc` as tested B's identity.
+- Next checkpoint: confirm browser, userscript manager, disposable profiles and exact setup authorization with JJ before browser changes. No new fixes, push, merge, release or automatic browser/profile/extension changes are authorized by acceptance.

@@ -12,7 +12,7 @@ Date: 2026-10-05. Node v26.8.2. No dependencies, network/API requests, browser/p
 | Runner | `6511cde60dd09b0050003ee3a42c74a7363a49eac7f04b0a5e6ed75cad0f6ad2` |
 | Input manifest | `6cb77d15bb1f73e9cd4138cfa6eb909bb3847d14d7275d7982df113713887820` |
 
-B is the unreleased source in the local implementation commit containing this handoff. The captured pre-commit run labels it uncommitted and pins its exact hash; the run handoff and artifact manifest record the resulting full commit. Metadata/version is unchanged. Input-manifest hash covers labels, explicit inputs and A expectations; runner hash additionally covers settings seeds, assertions, operations, mocks and clock/timer schedule.
+B is the unreleased source at implementation commit `303387389d30269293a5b6c7b9385a1fcf6b7fbc`; later documentation commits do not replace tested B's identity. The captured pre-commit run labels it uncommitted and pins its exact hash; the run handoff and artifact manifest record the resulting full commit. Metadata/version is unchanged. Input-manifest hash covers labels, explicit inputs and A expectations; runner hash additionally covers settings seeds, assertions, operations, mocks and clock/timer schedule.
 
 [comparison-output.txt](comparison-output.txt) records source paths/identities, all result rows and structured A assertion observations, including actual/expected snapshots on rejected-import checks.
 

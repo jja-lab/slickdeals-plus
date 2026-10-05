@@ -1,6 +1,6 @@
 # Candidate B: next manual checkpoint
 
-Status: prepared for JJ review only. This implementation grant authorizes offline artifacts and local commit, not browser/profile/extension changes, installation, release, push or merge. D01/D02 remain decided-in-flight; exact semantics need JJ disposition before a live experiment.
+Status: D01/D02 accepted by JJ on 2026-10-05; acceptance is appended to the decision records. Guided manual preparation is authorized. Confirm the concrete browser setup with JJ before any browser/profile/extension changes or script installation. No push, merge or release is authorized.
 
 Use the original [comparison protocol](../../audits/2026-10-05/comparison-plan.md) for disposable-profile isolation, manager auto-update controls, sequential variant activation, matched storage seeds, paired order, observation logs and rollback. Its historical statement that B did not yet exist is superseded by this implementation handoff; its broader case matrix does not enlarge the approved F01–F04 batch.
 
@@ -10,11 +10,19 @@ The run's `agent/artifacts/` retains `A.user.js`, `B.user.js` and `manifest.json
 
 `/Users/jjatkinson/Documents/Projects/astra-orchestrator/.astra/runs/20261005-200544-slickdeals-fix1-49854f8c/agent/artifacts/`
 
-A is `2d368f8e003aa6d9e7c28c8f4ef82f1fabcba8ac`, SHA-256 `bd090250026addeb1e4eac018129a4f8bd60673b12daee8163eb5281654877fb`. B is the reviewed candidate identified in the manifest and run handoff. Both retain original version metadata; do not identify them by displayed version or download a current release as a substitute. Verify hashes before and after any later installation. Keep artifact backups and source worktrees.
+A is `2d368f8e003aa6d9e7c28c8f4ef82f1fabcba8ac`, SHA-256 `bd090250026addeb1e4eac018129a4f8bd60673b12daee8163eb5281654877fb`. Tested B is implementation commit `303387389d30269293a5b6c7b9385a1fcf6b7fbc`, SHA-256 `63b5097d31bb0832bb187a82033fbee075e3fd4acb8f561d67f8c3a9fc6bcb83`; documentation acceptance commits do not replace its identity. Both retain original version metadata; do not identify them by displayed version or download a current release as a substitute. Verify hashes before and after any later installation. Keep artifact backups and source worktrees.
 
-## Proposed live acceptance sequence, pending authorization
+## Browser setup to confirm with JJ
 
-1. JJ reviews D01 token syntax and D02 rejection/fallback behavior, then explicitly authorizes disposable profiles and a bounded live session. Do not use the everyday profile or personal storage.
+Browser family/version, userscript manager/version, and existing disposable-profile details are pending JJ's answer. No browser changes have been made. Once supplied, verify the relevant official setup/update-control instructions and present the concrete steps for confirmation.
+
+Proposed setup: two disposable profiles named `Slickdeals A` and `Slickdeals B`, with the same browser/manager versions and configuration, logged out of browser sync and Slickdeals unless JJ explicitly chooses otherwise. Do not clone the everyday profile or import personal cookies/settings. Manager auto-update controls must prevent either exact local script being replaced; if that cannot be verified, stop before installation. Install only the matching artifact into each profile after confirmation, keeping scripts disabled until the sequential test begins.
+
+Use equal initial settings and empty dedup stores in the disposable profiles, record both GM and origin-local state, and restore the same test seeds for paired cases. Keep only one variant enabled across the experiment. First confirm setup; then guide installation/hash verification and the default-off smoke test one step at a time. Existing profiles may be reused only if JJ confirms they are disposable and their state can be matched. Record setup approval with its actual message; elapsed time or acceptance of D01/D02 does not authorize browser changes.
+
+## Proposed live acceptance sequence, pending setup confirmation
+
+1. D01/D02 acceptance is complete. Obtain JJ's explicit confirmation of the concrete disposable-profile setup and bounded test actions before changes. Do not use the everyday profile or personal storage.
 2. Apply the existing protocol's equal browser/manager settings and effective auto-update controls. Activate only one variant at a time across the experiment. Record exact installed hashes, timestamps, URLs and fixture identities.
 3. First verify alerts default off, existing filters/sorting/highlights, no alert toast/dedup writes, and one menu/style set.
 4. Replay numeric positive/negative cases from `compare.cjs`, including punctuation, larger prices, trailing decimals, model/version strings and custom numeric terms. Record title and verdict independently of real deal quality.
