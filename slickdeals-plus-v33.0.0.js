@@ -350,14 +350,25 @@
         function isValidHexColor(str) {
             return typeof str === 'string' && /^#[0-9A-Fa-f]{6}$/.test(str);
         }
+        function isValidWatchlist(watchlist) {
+            return watchlist !== null && typeof watchlist === 'object' && !Array.isArray(watchlist)
+                && ['A', 'B', 'C'].every(tier => Array.isArray(watchlist[tier])
+                    && Array.from(watchlist[tier]).every(term => typeof term === 'string' && term.trim().length > 0));
+        }
         function validateSettings(imported, defaults) {
-            const validated = {}, warnings = [];
-            if (typeof imported !== 'object' || imported === null) {
+            const validated = {}, warnings = [], errors = [];
+            if (typeof imported !== 'object' || imported === null || Array.isArray(imported)) {
                 return { settings: { ...defaults }, isValid: false, errors: ['Invalid object'], warnings: [] };
             }
             for (const key of Object.keys(defaults)) {
                 if (!(key in imported)) {
                     validated[key] = defaults[key];
+                    continue;
+                }
+                if (key === 'glitchKeywords' && !isValidWatchlist(imported[key])) {
+                    errors.push('Invalid glitchKeywords: expected A/B/C arrays of nonempty strings');
+                    // Safe for persisted invalid data; imports reject the entire result below.
+                    validated[key] = { A: [], B: [], C: [] };
                     continue;
                 }
                 if (typeof imported[key] !== typeof defaults[key]) {
@@ -372,12 +383,12 @@
                 }
                 validated[key] = imported[key];
             }
-            return { settings: validated, isValid: true, errors: [], warnings };
+            return { settings: validated, isValid: errors.length === 0, errors, warnings };
         }
         function sanitizeColor(color, fallback) {
             return isValidHexColor(color) ? color : fallback;
         }
-        return { isValidHexColor, validateSettings, sanitizeColor };
+        return { isValidHexColor, isValidWatchlist, validateSettings, sanitizeColor };
     })();
 
     // ============================================
@@ -1011,6 +1022,10 @@
                                     try {
                                         const parsed = JSON.parse(ev.target.result);
                                         const validation = ValidationModule.validateSettings(parsed, ConstantsModule.DEFAULTS);
+                                        if (!validation.isValid) {
+                                            ToastModule.show('Import failed', 'error');
+                                            return;
+                                        }
                                         if (validation.warnings.length) {
                                             ToastModule.show(`Imported with ${validation.warnings.length} warning(s)`, 'warning');
                                         } else {
@@ -1552,12 +1567,25 @@
          * @returns {{ tier: 'A'|'B'|'C', terms: string[] }|null}
          */
         function _matchKeywords(titleText, watchlist) {
-            if (!titleText || !watchlist) return null;
+            if (!titleText || !ValidationModule.isValidWatchlist(watchlist)) return null;
             const hits = { A: [], B: [], C: [] };
             for (const tier of ['A', 'B', 'C']) {
                 const terms = watchlist[tier] || [];
                 for (const term of terms) {
-                    if (titleText.includes(term.toLowerCase())) hits[tier].push(term);
+                    const lowerTerm = term.toLowerCase();
+                    let matches;
+                    if (/^\$?\d+(?:\.\d+)?$/.test(lowerTerm)) {
+                        // Lexical numeric tokens: avoid larger prices and attached model/version text.
+                        // Bare numbers allow a dollar prefix; explicit dollar terms require it.
+                        const number = lowerTerm.replace(/^\$/, '').replace(/\./g, '\\.');
+                        const currency = lowerTerm.startsWith('$') ? '\\$' : '\\$?';
+                        const token = new RegExp('(^|[^\\p{L}\\p{N}_.,$])' + currency + number
+                            + '(?![\\p{L}\\p{N}_]|\\.[\\p{L}\\p{N}_]|,\\d)', 'u');
+                        matches = token.test(titleText);
+                    } else {
+                        matches = titleText.includes(lowerTerm);
+                    }
+                    if (matches) hits[tier].push(term);
                 }
             }
             // Return the structured hit object even if multiple tiers hit
@@ -1653,12 +1681,10 @@
 
             // ── Keyword signals ────────────────────────────────────────────────
             const titleText = el.titleText || ''; // already .toLowerCase() per getDealData
-            // Structural guard: a truthy but malformed glitchKeywords (e.g. {} or {A:'x'})
-            // is not usable — fall back to DEFAULTS rather than silently going keyword-deaf.
-            let watchlist = settings && settings.glitchKeywords;
-            if (!watchlist || !Array.isArray(watchlist.A) || !Array.isArray(watchlist.B) || !Array.isArray(watchlist.C)) {
-                watchlist = ConstantsModule.DEFAULTS.glitchKeywords;
-            }
+            // Missing settings retain defaults; present malformed lists produce no keyword hits.
+            // Never broaden a customized watchlist by silently substituting default terms.
+            const watchlist = settings && 'glitchKeywords' in settings
+                ? settings.glitchKeywords : ConstantsModule.DEFAULTS.glitchKeywords;
             const keywordHits = _matchKeywords(titleText, watchlist);
 
             let topTier = null; // highest tier that contributed to score
@@ -2076,11 +2102,9 @@
             context.eventBus.on('settingsChanged', ({ key }) => {
                 const reprocessKeys = ['hidePromoted', 'freeOnly', 'goldTierOnly', 'highlightRating', 'highlightDiff', 'bypassRedirects', 'showDiff', 'minPrice', 'maxPrice', 'excludeKeywords', 'includeKeywords', 'glitchAlerts', 'glitchSensitivity'];
                 if (reprocessKeys.includes(key) || key === 'all') {
-                    // When glitchAlerts is explicitly toggled OFF, sweep any stale sdp-glitch-alert
-                    // highlights before the reprocess runs. The reprocess itself skips the gated
-                    // block (glitchAlerts=false), so it won't clear them on its own. One-time sweep
-                    // only on this explicit disable event — the default-off path is untouched.
-                    if (key === 'glitchAlerts' && !context.settings.getSettings().glitchAlerts) {
+                    // Disabled alerts skip card evaluation, so clear stale classes here even
+                    // for reset/import ('all') and cards that no longer have usable deal data.
+                    if (!context.settings.getSettings().glitchAlerts) {
                         document.querySelectorAll('.sdp-glitch-alert').forEach(el => el.classList.remove('sdp-glitch-alert'));
                     }
                     context.processing.processAllCards(true).then(() => context.sorting.applySorting());

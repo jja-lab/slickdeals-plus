@@ -1,0 +1,139 @@
+{
+  "backup": "/Users/jjatkinson/Documents/Projects/slickdeals-plus/.git/retired-hooks/20261005-200544-slickdeals-fix1-49854f8c",
+  "effective_hooksPath": "unset; default repository .git/hooks",
+  "before": {
+    "applypatch-msg.sample": {
+      "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+      "mode": "0o755"
+    },
+    "commit-msg.sample": {
+      "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+      "mode": "0o755"
+    },
+    "fsmonitor-watchman.sample": {
+      "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0",
+      "mode": "0o755"
+    },
+    "post-commit": {
+      "sha256": "2b6e61aa4b150e4b24f789ea691a0c4dbae95fdab5ab2a655ae1ebb2f1d0a770",
+      "mode": "0o755"
+    },
+    "post-update.sample": {
+      "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+      "mode": "0o755"
+    },
+    "pre-applypatch.sample": {
+      "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+      "mode": "0o755"
+    },
+    "pre-commit": {
+      "sha256": "b367c0904c55d99f84b3e4d7db653719b57746165c8de63e6401a421f8a86f01",
+      "mode": "0o755"
+    },
+    "pre-commit.sample": {
+      "sha256": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b",
+      "mode": "0o755"
+    },
+    "pre-merge-commit.sample": {
+      "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53",
+      "mode": "0o755"
+    },
+    "pre-push.sample": {
+      "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a",
+      "mode": "0o755"
+    },
+    "pre-rebase.sample": {
+      "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3",
+      "mode": "0o755"
+    },
+    "pre-receive.sample": {
+      "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+      "mode": "0o755"
+    },
+    "prepare-commit-msg.sample": {
+      "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619",
+      "mode": "0o755"
+    },
+    "push-to-checkout.sample": {
+      "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f",
+      "mode": "0o755"
+    },
+    "sendemail-validate.sample": {
+      "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92",
+      "mode": "0o755"
+    },
+    "update.sample": {
+      "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106",
+      "mode": "0o755"
+    }
+  },
+  "after": {
+    "applypatch-msg.sample": {
+      "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+      "mode": "0o755"
+    },
+    "commit-msg.sample": {
+      "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+      "mode": "0o755"
+    },
+    "fsmonitor-watchman.sample": {
+      "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0",
+      "mode": "0o755"
+    },
+    "post-commit": {
+      "sha256": "429f15c604ceb22be1d61c79f45e83836fc2b5fe092b212fa98c01b439658c00",
+      "mode": "0o755"
+    },
+    "post-update.sample": {
+      "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+      "mode": "0o755"
+    },
+    "pre-applypatch.sample": {
+      "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+      "mode": "0o755"
+    },
+    "pre-commit": {
+      "sha256": "429f15c604ceb22be1d61c79f45e83836fc2b5fe092b212fa98c01b439658c00",
+      "mode": "0o755"
+    },
+    "pre-commit.sample": {
+      "sha256": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b",
+      "mode": "0o755"
+    },
+    "pre-merge-commit.sample": {
+      "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53",
+      "mode": "0o755"
+    },
+    "pre-push.sample": {
+      "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a",
+      "mode": "0o755"
+    },
+    "pre-rebase.sample": {
+      "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3",
+      "mode": "0o755"
+    },
+    "pre-receive.sample": {
+      "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+      "mode": "0o755"
+    },
+    "prepare-commit-msg.sample": {
+      "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619",
+      "mode": "0o755"
+    },
+    "push-to-checkout.sample": {
+      "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f",
+      "mode": "0o755"
+    },
+    "sendemail-validate.sample": {
+      "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92",
+      "mode": "0o755"
+    },
+    "update.sample": {
+      "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106",
+      "mode": "0o755"
+    }
+  },
+  "backup_verified": true,
+  "unrelated_hooks_unchanged": true,
+  "retired_content": "#!/bin/sh\n# Retired repository-local Loom integration, authorized by JJ on 2026-10-05.\n# Exact original retained under ../retired-hooks/20261005-200544-slickdeals-fix1-49854f8c/.\nexit 0\n"
+}
