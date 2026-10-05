@@ -1,0 +1,22 @@
+Baseline SHA-256 bd090250026addeb1e4eac018129a4f8bd60673b12daee8163eb5281654877fb; Node v26.8.2
+PASS built-in fixtures 8/8 in isolated stores
+PASS detector exclusions, sensitivity-independent A/B combinations and 40% boundary
+XFAIL F01 numeric keyword boundaries observed=[true,true] desired=[false,false]
+XFAIL F02 malformed watchlist elements observed=["accepted then TypeError","accepted then TypeError"] desired=["safely rejected or normalized","safely rejected or normalized"]
+XFAIL F02 empty keyword observed=true desired=false
+XFAIL F03 invalid root import observed={"minPrice":"","message":"Settings imported"} desired={"minPrice":"25","message":"Import failed"}
+PASS default-off pipeline: no alert class or dedup writes; wrapper-less filter and highlighting
+PASS explicit alert disable clears highlight
+XFAIL F04 stale highlight reset-all observed=true desired=false
+XFAIL F04 stale highlight import-all observed=true desired=false
+XFAIL F05 repeated redirect handlers observed=3 desired=1
+XFAIL F06 shared debounce loses first field observed=["","50"] desired=["10","50"]
+PASS dedup reload, number/string normalization, idempotency and FIFO cap
+PASS API envelopes, partial rejection and total rejection with DOM fallback
+XFAIL F07 partial API suppresses DOM fields observed=["NaN","0","0"] desired=["10","50","90"]
+XFAIL F08 API has no application timeout observed={"settled":false,"timers":0} desired={"settled":true,"timers":0}
+XFAIL F09 insertion lost under processing lock observed=0 desired=1
+PASS sorting rating/discount/default independently per feed
+PASS links reject active schemes; settings dual writes and DOM number parser
+XFAIL F10 destination decoded twice observed="https://example.test/search?q=a&b" desired="https://example.test/search?q=a%26b"
+SUMMARY 8 control groups passed; 12 expected baseline failures; 0 unexpected failures
