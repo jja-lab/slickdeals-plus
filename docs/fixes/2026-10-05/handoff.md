@@ -1,5 +1,15 @@
 # Slickdeals+ first fix batch handoff
 
+## Current checkpoint — focused native checks completed, 2026-10-07
+
+[Controlled native results](native-browser-2026-10-07.md) and the [machine summary](native-results-2026-10-07.json) record the subsequent authorized browser work. Exact scripts are unchanged. A's 132 detector checks produced 66 passes/66 expected baseline failures; B passed all 132, with 8/8 built-ins in each. B clears wrapped/bare/no-data highlights on toggle, reset, import and relevant reprocessing, without changing dedup. Reset cancellation preserves settings. A reproduces stale reset/reprocessing highlights and invalid-root import defects.
+
+JJ accepted six focused B native imports instead of further A imports: all six pass, with valid empty/custom lists persisting in live settings and both stores after reload. Other generated import cases remain offline-only. B42's delayed read recovered its original observer evidence; it is not inferred solely from JJ's report. [Independent native review](native-review-2026-10-07.md) records the evidence review and limits.
+
+Both final native exports decode to the exact pinned sources; both manager/script switches are off. Final stores contain default settings and four intentional synthetic dedup IDs. Test routes were removed and observed base pages unloaded. These dedup entries distinguish this checkpoint from the earlier smoke's empty stores. Source/audit worktrees, hook backups and all prior evidence remain preserved; no production changes, new dependencies, push, merge or release.
+
+Protocol N01 (intercepted fixture isolation) remains an in-flight agent decision for JJ review. JJ-approved N03 superseded the original N02 twelve-case native import plan; records live in the run directory below. D01/D02 remain accepted. Next checkpoint: JJ reviews this candidate and protocol/results limitations and chooses any later work; no more native checks are pending within the accepted focused batch. F05–F11 and general live-site compatibility/performance remain unresolved. Historical checkpoint sections below retain their original dated boundaries.
+
 ## Accepted decisions — JJ disposition 2026-10-05
 
 - [D01: numeric token boundaries](../../decisions/2026-10-05-numeric-watch-terms.md): strict lexical numeric matching avoids larger prices and attached model/version tokens, preserves standalone penny matches and ordinary text semantics. Terminal punctuation is allowed under the documented boundary rules; 0.010 is distinct from 0.01.

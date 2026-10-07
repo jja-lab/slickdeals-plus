@@ -1,0 +1,204 @@
+{
+  "scope": "Focused controlled native F01\u2013F04; six B imports per accepted N03; no universal browser claim",
+  "sources": {
+    "A": {
+      "commit": "2d368f8e003aa6d9e7c28c8f4ef82f1fabcba8ac",
+      "sha256": "bd090250026addeb1e4eac018129a4f8bd60673b12daee8163eb5281654877fb"
+    },
+    "B": {
+      "commit": "303387389d30269293a5b6c7b9385a1fcf6b7fbc",
+      "sha256": "63b5097d31bb0832bb187a82033fbee075e3fd4acb8f561d67f8c3a9fc6bcb83"
+    }
+  },
+  "nativePure": {
+    "A": {
+      "pass": 66,
+      "fail": 66,
+      "failMeaning": "expected baseline defects",
+      "builtIns": {
+        "pass": 8,
+        "fail": 0
+      },
+      "settingsUnchanged": true
+    },
+    "B": {
+      "pass": 132,
+      "fail": 0,
+      "failMeaning": "unexpected",
+      "builtIns": {
+        "pass": 8,
+        "fail": 0
+      },
+      "settingsUnchanged": true
+    }
+  },
+  "imports": {
+    "B-00": {
+      "caseIndex": 0,
+      "pass": true,
+      "settingsUnchanged": true,
+      "allObservedLocalEntriesUnchanged": true,
+      "gmMasterUnchanged": true,
+      "observableStyleRefreshes": 0,
+      "toast": [
+        {
+          "text": "Import failed",
+          "color": "rgb(244, 67, 54)"
+        }
+      ],
+      "userReport": "import failed"
+    },
+    "B-09": {
+      "caseIndex": 9,
+      "pass": true,
+      "settingsUnchanged": true,
+      "allObservedLocalEntriesUnchanged": true,
+      "gmMasterUnchanged": true,
+      "observableStyleRefreshes": 0,
+      "toast": [
+        {
+          "text": "Import failed",
+          "color": "rgb(244, 67, 54)"
+        }
+      ],
+      "userReport": "imported 09.json -- import failed"
+    },
+    "B-20": {
+      "caseIndex": 20,
+      "pass": true,
+      "settingsUnchanged": true,
+      "allObservedLocalEntriesUnchanged": true,
+      "gmMasterUnchanged": true,
+      "observableStyleRefreshes": 0,
+      "toast": [
+        {
+          "text": "Import failed",
+          "color": "rgb(244, 67, 54)"
+        }
+      ],
+      "userReport": "imported 20.json -- import failed"
+    },
+    "B-39": {
+      "caseIndex": 39,
+      "checks": {
+        "expectedSettings": true,
+        "storesAgree": true,
+        "correctToast": true,
+        "refreshObserved": true,
+        "fourHighlightedBefore": true,
+        "clearedAfterAndRepeated": true,
+        "alertsOff": true,
+        "dedupUnchanged": true,
+        "nativeMembershipRetained": true,
+        "noNewAlertToasts": true
+      },
+      "pass": true,
+      "persistence": "passed: actual fixture reload; settings/GM/local match empty expected list, dedup unchanged"
+    },
+    "B-40": {
+      "caseIndex": 40,
+      "checks": {
+        "settingsExact": true,
+        "storesExact": true,
+        "toast": true,
+        "refreshObserved": true,
+        "dedupUnchanged": true
+      },
+      "pass": true,
+      "persistence": "passed: actual fixture reload; exact custom strings, whitespace, numeric term and unknown tier preserved in settings/GM/local; dedup unchanged"
+    },
+    "B-42": {
+      "caseIndex": 42,
+      "checks": {
+        "settingsExact": true,
+        "storesExact": true,
+        "toast": true,
+        "refreshObserved": true,
+        "dedupUnchanged": true,
+        "alertsOff": true,
+        "noHighlights": true
+      },
+      "pass": true,
+      "capture": "Delayed after read recovered surviving original harness/observer; no intervening test mutation recorded",
+      "userReport": "imported 42.json and it showed 2 warnings like you anticipated"
+    },
+    "A-00": {
+      "caseIndex": 0,
+      "input": "null",
+      "variant": "A",
+      "expectedBaselineDefectObserved": true,
+      "toast": [
+        {
+          "text": "Settings imported",
+          "color": "rgb(76, 175, 80)"
+        }
+      ],
+      "storesAgree": true,
+      "userReport": "ok imported and I saw \"settings imported\""
+    },
+    "A-01": {
+      "caseIndex": 1,
+      "variant": "A",
+      "input": "0",
+      "expectedBaselineDefectObserved": true,
+      "storesAgree": true,
+      "toast": [
+        {
+          "text": "Settings imported",
+          "color": "rgb(76, 175, 80)"
+        }
+      ]
+    }
+  },
+  "final": {
+    "A": {
+      "exportPath": "/private/tmp/slickdeals-ab-0qbzx84j/exports/A-native-export.txt",
+      "exportSHA256": "062dd7db16ea6c716306a189f57716846ef39be7d99646401324d8f3dc509fd5",
+      "decodedSourceSHA256": "bd090250026addeb1e4eac018129a4f8bd60673b12daee8163eb5281654877fb",
+      "sourceExactA": true,
+      "managerEnabled": false,
+      "scriptEnabled": false,
+      "managerSettingsOptionsUuidUnchanged": true,
+      "gmMasterMatchesLastNativeLocalAndGM": true,
+      "dedupMatchesLastNativeLocal": true,
+      "syntheticDedupIds": [
+        "__sd_native_wrap",
+        "__sd_native_wrap_nodata",
+        "__sd_native_bare",
+        "__sd_native_bare_nodata"
+      ],
+      "pageEvidence": "A-final-disabled-page.json",
+      "routesRemoved": "four exact N01 per-page routes only",
+      "sourceEncoding": "base64; hash verified after decoding"
+    },
+    "B": {
+      "exportPath": "/private/tmp/slickdeals-ab-0qbzx84j/exports/B-native-disabled.txt",
+      "exportSHA256": "afe81a41461f467b9aa628919e907b6715a77dabd490d2aa2dec2760dfe42d49",
+      "decodedSourceSHA256": "63b5097d31bb0832bb187a82033fbee075e3fd4acb8f561d67f8c3a9fc6bcb83",
+      "sourceExactB": true,
+      "managerEnabled": false,
+      "scriptEnabled": false,
+      "managerSettingsOptionsUuidUnchanged": true,
+      "gmMasterMatchesLastNativeLocalAndGM": true,
+      "dedupMatchesLastNativeLocal": true,
+      "syntheticDedupIds": [
+        "__sd_native_wrap",
+        "__sd_native_wrap_nodata",
+        "__sd_native_bare",
+        "__sd_native_bare_nodata"
+      ],
+      "sourceEncoding": "base64; hash verified after decoding",
+      "pageVerification": "B-final-disabled-page.json",
+      "freshLocalMasterAndDedupMatchExport": true,
+      "routesRemoved": "four exact N01 routes only"
+    }
+  },
+  "inputs": {
+    "cases.json": "1e9a6f71f49242b0436d724ef91f68ffb38a6a6828222bc850add6472fa41878",
+    "import-cases.json": "b36395387d12d5fcddc336198b022785072ba032c19724b75e9312a5191d9fb8",
+    "fixture.html": "de9ee23f9b1251b675d29204192ab12f5dc3f889b8fb3618bdf5595e1adca9c9",
+    "page-harness-expanded.js": "df5417dd0e054dcdca9ac9a13a3db261f8647036e180afae07afa6699265d422",
+    "pure-driver-expanded.js": "74423457ee5d624262e0a424e3f5eec43be7d4d67d3db09e622fae3b1e5ae7f3"
+  },
+  "evidenceDirectory": "/Users/jjatkinson/Documents/Projects/astra-orchestrator/.astra/runs/20261005-200544-slickdeals-fix1-49854f8c/agent/native-f01-f04"
+}

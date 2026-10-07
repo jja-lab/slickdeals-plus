@@ -1,5 +1,11 @@
 # Candidate B: next manual checkpoint
 
+## Current status — 2026-10-07
+
+The subsequent focused native F01–F04 checkpoint is complete; see [native results](native-browser-2026-10-07.md) and [independent review](native-review-2026-10-07.md). B passed 132 detector checks, 8 built-ins, the tested highlight transitions, and six JJ-approved native imports, including empty/custom reload persistence. Remaining import categories have offline coverage only. Both scripts/managers are disabled, exact source hashes preserved, default settings restored, and four synthetic dedup IDs retained in each disposable profile. No further manual import is needed for this accepted checkpoint.
+
+Next action is JJ review of candidate B, in-flight N01 fixture protocol, actual coverage and unresolved followups. Keep scripts off until a later concrete test/use checkpoint. No merge, push, release, new fix batch or general live compatibility claim is authorized. The following 2026-10-06 setup proposal and sequence are historical; their pending-approval wording does not reopen completed work.
+
 Status as of 2026-10-06: D01/D02 accepted; disposable-profile setup and sequential default-off smoke were subsequently approved and completed. See [native smoke results](browser-smoke-2026-10-06.md) for actual source, storage and browser evidence and limitations. Both scripts/managers finish disabled. Broader alert-enabled F01–F04 tests remain a separate JJ checkpoint. No push, merge or release is authorized.
 
 Use the original [comparison protocol](../../audits/2026-10-05/comparison-plan.md) for disposable-profile isolation, manager auto-update controls, sequential variant activation, matched storage seeds, paired order, observation logs and rollback. Its historical statement that B did not yet exist is superseded by this implementation handoff; its broader case matrix does not enlarge the approved F01–F04 batch.
