@@ -16,6 +16,7 @@ Format: `[Version] - Date`
 Development builds retain the 33.0.0 version label until release preparation; these changes are not yet published through automatic updates.
 
 ### Fixed
+- Preserve focused number-field editing state and caret during settings saves/refresh; avoid unnecessary text-save repopulation. Unreadable saved settings now point to Reset All or Import.
 - Saved menu selections populate after listener setup, preserving the displayed sensitivity and other saved choices.
 - **F06:** rapid edits across price and keyword fields save together; clear/reset/import cannot be undone by a queued save.
 - **F05:** forced processing replaces redirect handlers instead of accumulating them, and removes stale resolved destinations.

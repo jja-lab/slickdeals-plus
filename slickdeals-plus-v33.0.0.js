@@ -32,6 +32,7 @@
  * - Fix saved menu selections after listener setup.
  * - F06: preserve rapid multi-field edits; bulk actions cancel pending saves.
  * - F05: replace duplicate redirect handlers and clear stale destinations.
+ * - Preserve focused field edits during saves/refresh; clarify unreadable-settings recovery.
  * - Merge edited settings with newer stored fields; refresh on menu opening.
  *   Clear affects filters only; reset/import replace all. Simultaneous writes can
  *   still race, and the existing 600 ms text-save delay remains.
@@ -719,11 +720,14 @@
                 log.warn('Cannot save - settings is null');
                 return;
             }
+            let phase = replace ? 'prepare' : 'read';
             try {
                 const next = replace ? settings : mergeLatest(keys).merged;
+                phase = 'prepare';
                 const changed = JSON.stringify(settings) !== JSON.stringify(next);
                 const json = JSON.stringify(next);
 
+                phase = 'write';
                 // Save to GM storage
                 if (typeof GM_setValue === 'function') {
                     GM_setValue(STORAGE_KEY, json);
@@ -746,7 +750,12 @@
                 return { saved: true, changed };
             } catch (e) {
                 log.error('Save error:', e);
-                ToastModule.show('Settings could not be saved. Please retry.', 'error');
+                const message = phase === 'read'
+                    ? 'Saved settings are unreadable. Use Reset All or Import to recover.'
+                    : phase === 'write'
+                        ? 'Settings could not be saved. Please retry.'
+                        : 'Settings could not be prepared for saving. Use Reset All or Import to recover.';
+                ToastModule.show(message, 'error');
                 return { saved: false, changed: false };
             }
         }
@@ -945,6 +954,7 @@
             try {
                 const s = context.settings.getSettings();
                 document.querySelectorAll('[data-setting]').forEach(el => {
+                    if (el === document.activeElement) return; // Preserve partial input and caret state.
                     const key = el.dataset.setting;
                     if (s[key] !== undefined) {
                         if (el.type === 'checkbox') el.checked = s[key];
@@ -1012,7 +1022,7 @@
                         const s = context.settings.getSettings();
                         const result = context.settings.saveSettings({ keys: [...pendingTextKeys] });
                         if (result?.saved !== false) pendingTextKeys.clear();
-                        populateMenu();
+                        if (result?.changed) populateMenu();
                         context.eventBus.emit('settingsChanged', { key: 'all', allSettings: s });
                     } catch (err) {
                         log.error('Debounced save error:', err);

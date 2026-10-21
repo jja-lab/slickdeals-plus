@@ -2,7 +2,7 @@
 <h1>Settings synchronization regression</h1><pre id="results">Running…</pre>
 <script>
 (async()=>{
- const source=await(await fetch('../'+(new URLSearchParams(location.search).has('baseline')?'baseline.js':'slickdeals-plus-v33.0.0.js'))).text();
+ const source=await(await fetch('../'+(new URLSearchParams(location.search).has('repairBaseline')?'repair-baseline.js':new URLSearchParams(location.search).has('baseline')?'baseline.js':'slickdeals-plus-v33.0.0.js'))).text();
  const prefix=source.slice(source.indexOf('    const ConstantsModule ='),source.indexOf('    // MODULE: Link'));
  const modules=source.slice(source.indexOf('    function SettingsModule()'),source.indexOf('    function StylesModule(context)'));
  const key='sdPlus_settings_master',results=[];const check=(v,name)=>results.push({name,pass:!!v});
@@ -68,6 +68,34 @@
  reset();a=await tab(true);b=await tab(true);a.change('glitchAlerts',true);b.change('sortBy','rating');check(stored().glitchAlerts&&stored().sortBy==='rating','local-only fallback merges stale edits');
  const localBefore=local.get(key);failLocal=true;b.input('minPrice','7');b.tick(600);failLocal=false;check(local.get(key)===localBefore,'local-only failure leaves store intact');b.settings.saveSettings();check(stored().minPrice==='7','local-only failure can retry pending edits');
  reset();a=await tab();failLocal=true;a.change('glitchAlerts',true);failLocal=false;check(stored().glitchAlerts,'GM success tolerates unavailable backup');
+
+ // Observe actual DOM property setters: assigning an equal value can still destroy partial input.
+ function assignments(t,key,property='value') {
+  const el=t.d.querySelector(`[data-setting="${key}"]`),descriptor=Object.getOwnPropertyDescriptor(t.w.HTMLInputElement.prototype,property);let count=0;
+  Object.defineProperty(el,property,{configurable:true,get(){return descriptor.get.call(this)},set(value){count++;descriptor.set.call(this,value)}});
+  return {el,count:()=>count,clear:()=>{count=0}};
+ }
+ reset();a=await tab();b=await tab();let focused=assignments(b,'minPrice'),other=assignments(b,'maxPrice');
+ focused.el.focus();check(b.d.activeElement===focused.el,'number focus setup verified');b.input('minPrice','12');focused.clear();other.clear();b.tick(600);
+ check(focused.count()===0,'focused number is never assigned during ordinary text save');
+ check(other.count()===0,'unchanged text save does not repopulate any input');
+ a.change('glitchAlerts',true);b.input('minPrice','13');focused.clear();other.clear();b.tick(600);
+ check(focused.count()===0&&other.count()>0&&b.state().glitchAlerts,'changed text save refreshes other controls without assigning focused input');
+ a.change('highlightDiff','10');focused.clear();b.open();
+ check(focused.count()===0&&b.state().highlightDiff===10,'menu refresh never assigns focused number');
+ b.input('minPrice','14');focused.clear();b.change('sortBy','rating');
+ check(focused.count()===0&&stored().minPrice==='14','nontext save never assigns focused number and still flushes edits');
+ let box=assignments(b,'glitchAlerts','checked');box.el.focus();check(b.d.activeElement===box.el,'checkbox focus setup verified');b.change('glitchAlerts',false);box.clear();a.change('highlightDiff','20');b.open();b.open();
+ check(box.count()===0,'refresh never assigns checked on focused checkbox');
+ box.clear();b.change('sortBy','default');check(box.count()===0,'save never assigns checked on focused checkbox');
+ for(const raw of ['{','null','[]']) {
+  reset();a=await tab();gm.set(key,raw);a.change('sortBy','rating');
+  check(a.toasts.at(-1)?.[0]==='Saved settings are unreadable. Use Reset All or Import to recover.','corrupt primary gives actionable recovery wording: '+raw);
+ }
+ reset();a=await tab();failRead=true;a.change('sortBy','rating');
+ check(a.toasts.at(-1)?.[0]==='Saved settings are unreadable. Use Reset All or Import to recover.','primary read failure points to Reset All or Import');
+ failRead=false;failWrite=true;a.change('sortBy','default');
+ check(a.toasts.at(-1)?.[0]==='Settings could not be saved. Please retry.','write failure retains retry wording');
  reset();const failed=results.filter(r=>!r.pass).length;document.getElementById('results').textContent=JSON.stringify({passed:results.length-failed,failed,results},null,2);
 })().catch(e=>document.getElementById('results').textContent=JSON.stringify({error:e.stack}));
 </script>

@@ -13,3 +13,13 @@ Runner-up: continuous GM listeners plus dirty tracking, but this requires new gr
 Limits: idle pages may display stale state until menu opening, save or reload. Exactly overlapping writes can still race because storage has no compare-and-set. Existing 600 ms persistence delay remains; immediate reload can lose unsaved text. Primary-write failure is logged and pending field intent retained; no automatic retry loop. Reset/import failure does not constitute successful persistence.
 
 Reversal: revert this focused commit; existing storage format needs no migration. Cost is restoring the stale-tab overwrite. Review checkpoint: actual SettingsModule/MenuModule shared-storage regressions including failures and explicit bulk semantics, prior regression suites, independent review, native B installed-source/settings verification and bounded two-tab smoke before local commit. Human ratification pending.
+
+## Repair checkpoint — 2026-10-21 (in flight)
+
+JJ explicitly authorized the focused-field guard, conditional text-save repopulation, unreadable-primary recovery wording, no automatic fallback, regression/native verification, documentation, independent review and local commit only. This adds to the original record; it does not retroactively ratify it.
+
+Implementation choice: classify save failures by read/prepare/write phase. Read/parse/root failures say “Saved settings are unreadable. Use Reset All or Import to recover.” Write-stage failures retain “Please retry”; preparation failures receive recovery guidance without retry. We cannot determine whether a write failure is transient from the storage exception alone; retry is a write-stage action, not a guarantee it will recover. No automatic backup promotion or automatic retry loop.
+
+Focused controls retain their DOM editing state until a later population while unfocused; other controls still refresh normally. This follows JJ's exact activeElement constraint. The setter-count fixture tests actual assignments (including equal values), with explicit focus setup checks; native partial-number sequences remain the acceptance check for browser transient text.
+
+Alternative: silently use localStorage after primary corruption was rejected by JJ's explicit no-fallback scope and the risk of promoting stale backup values. Full input buffering/caret reconstruction is unnecessary for the bounded focus guard. Revert the repair commit to undo these changes, at the cost of returning the partial-input bug and misleading corruption wording; no migration/dependency change. Ratification checkpoint: review the repair results and the original synchronization semantics together. N01/T3 remain separate unresolved matters.
