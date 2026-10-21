@@ -785,6 +785,12 @@
         let navBarObserver = null;
         let documentClickHandler = null;
         let documentKeydownHandler = null;
+        let textSaveTimer = null;
+
+        function cancelTextSave() {
+            clearTimeout(textSaveTimer);
+            textSaveTimer = null;
+        }
 
         async function createMenu() {
             try {
@@ -923,34 +929,38 @@
                             ToastModule.show('Invalid color', 'warning');
                             return;
                         }
+                        const hadPendingText = textSaveTimer !== null;
+                        cancelTextSave(); // This change saves all current field edits too.
                         const s = context.settings.getSettings();
                         s[key] = value;
                         if (key === 'freeOnly' && value) s.goldTierOnly = false;
                         if (key === 'goldTierOnly' && value) s.freeOnly = false;
                         populateMenu();
                         context.settings.saveSettings();
-                        context.eventBus.emit('settingsChanged', { key, value, allSettings: s });
+                        context.eventBus.emit('settingsChanged', { key: hadPendingText ? 'all' : key, value, allSettings: s });
                     } catch (err) {
                         log.error('Setting change error:', err);
                     }
                 });
 
-                // Debounced input for text fields
-                const debouncedSave = UtilsModule.debounce((key, value) => {
+                // Keep every field edit; debounce only persistence and reprocessing.
+                const saveTextFields = () => {
+                    textSaveTimer = null;
                     try {
                         const s = context.settings.getSettings();
-                        s[key] = value;
                         context.settings.saveSettings();
-                        context.eventBus.emit('settingsChanged', { key, value, allSettings: s });
+                        context.eventBus.emit('settingsChanged', { key: 'all', allSettings: s });
                     } catch (err) {
                         log.error('Debounced save error:', err);
                     }
-                }, 600);
+                };
 
                 newMenuBody.addEventListener('input', e => {
                     const key = e.target.dataset.setting;
                     if (['excludeKeywords', 'includeKeywords', 'minPrice', 'maxPrice'].includes(key)) {
-                        debouncedSave(key, e.target.value);
+                        context.settings.getSettings()[key] = e.target.value;
+                        cancelTextSave();
+                        textSaveTimer = setTimeout(saveTextFields, 600);
                     }
                 });
 
@@ -959,6 +969,7 @@
                 if (clearBtn) {
                     clearBtn.addEventListener('click', () => {
                         try {
+                            cancelTextSave();
                             const s = context.settings.getSettings();
                             Object.assign(s, { freeOnly: false, goldTierOnly: false, minPrice: '', maxPrice: '', excludeKeywords: '', includeKeywords: '', sortBy: 'default' });
                             populateMenu();
@@ -977,6 +988,7 @@
                     resetBtn.addEventListener('click', () => {
                         if (confirm('Reset all settings?')) {
                             try {
+                                cancelTextSave();
                                 const s = context.settings.getSettings();
                                 Object.assign(s, ConstantsModule.DEFAULTS);
                                 populateMenu();
@@ -1032,6 +1044,7 @@
                                         } else {
                                             ToastModule.show('Settings imported', 'success');
                                         }
+                                        cancelTextSave();
                                         Object.assign(context.settings.getSettings(), validation.settings);
                                         populateMenu();
                                         context.settings.saveSettings();

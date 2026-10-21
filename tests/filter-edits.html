@@ -1,0 +1,56 @@
+<!doctype html><meta charset="utf-8"><title>F06 filter edit regression</title>
+<h1>Filter edit regression</h1><pre id="results">Running…</pre>
+<script>
+(async()=>{
+ const file=new URLSearchParams(location.search).has('baseline')?'baseline.js':'slickdeals-plus-v33.0.0.js';
+ const source=await (await fetch('../'+file)).text();
+ const modules=source.slice(source.indexOf('    const ConstantsModule ='),source.indexOf('    // MODULE: Link'));
+ const menuCode=source.slice(source.indexOf('    function MenuModule(context)'),source.indexOf('    function StylesModule(context)'));
+ const results=[]; const check=(ok,name)=>results.push({name,pass:!!ok});
+ async function fixture(saved){
+  const frame=document.createElement('iframe');document.body.append(frame);
+  const w=frame.contentWindow,d=w.document;d.body.innerHTML='<ul class="slickdealsHeader__linkSection"></ul>';
+  let now=0,id=0;const timers=new Map();
+  w.setTimeout=(fn,ms)=>{timers.set(++id,{fn,at:now+ms});return id};w.clearTimeout=id=>timers.delete(id);
+  const tick=ms=>{const end=now+ms;while(true){const next=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;timers.delete(next[0]);now=next[1].at;next[1].fn()}now=end};
+  const errors=[],events=[],writes=[];let state;
+  const context={settings:{getSettings:()=>state,saveSettings:()=>writes.push(JSON.parse(JSON.stringify(state)))},eventBus:{emit:(name,data)=>events.push({...data})}};
+  const setup=w.Function('context','log','ToastModule',modules+'\n'+menuCode+'\nreturn {menu:MenuModule(context),defaults:ConstantsModule.DEFAULTS};')(context,{error:(...x)=>errors.push(x),warn:()=>{},debug:()=>{}},{show:()=>{}});
+  state=JSON.parse(JSON.stringify(saved||setup.defaults));await setup.menu.createMenu();
+  const input=(key,value)=>{const el=d.querySelector(`[data-setting="${key}"]`);el.value=value;el.dispatchEvent(new w.Event('input',{bubbles:true}))};
+  const click=id=>d.getElementById(id).click();
+  // Exercise the actual import handler without opening a system picker.
+  let importText;w.HTMLInputElement.prototype.click=function(){if(this.type==='file')this.onchange({target:{files:[{}]}})};
+  w.FileReader=class{readAsText(){this.onload({target:{result:importText}})}};
+  return {w,d,tick,input,click,state,writes,events,errors,defaults:setup.defaults,
+   import:text=>{importText=text;click('sdPlusImportButton')},close:()=>frame.remove()};
+ }
+ let f=await fixture();
+ for(const [k,v] of [['minPrice','10'],['maxPrice','50'],['includeKeywords','camera'],['excludeKeywords','used']]){f.input(k,v);f.tick(100)}
+ check(f.writes.length===0,'no early persistence');f.tick(600);
+ for(const [k,v] of [['minPrice','10'],['maxPrice','50'],['includeKeywords','camera'],['excludeKeywords','used']])check(f.writes.at(-1)?.[k]===v,'rapid fields persisted: '+k);
+ check(f.writes.length===1&&f.events.length===1,'one combined save/event');
+ const persisted=f.writes.at(-1);f.close();f=await fixture(persisted);
+ check(['minPrice','maxPrice','includeKeywords','excludeKeywords'].every(k=>f.d.querySelector(`[data-setting="${k}"]`).value===persisted[k]),'reload displays persisted fields');f.close();
+ f=await fixture();f.input('minPrice','1');f.tick(400);f.input('minPrice','12');f.tick(599);check(!f.writes.length,'same-field timer coalesces');f.tick(1);check(f.writes.length===1&&f.writes[0].minPrice==='12','same-field last value saved');f.close();
+ for(const action of ['clear','reset','import','cancel-reset','invalid-import','malformed-import']){
+  f=await fixture();f.input('minPrice','17');f.input('maxPrice','77');f.tick(200);
+  f.w.confirm=()=>action!=='cancel-reset';
+  if(action==='clear')f.click('sdPlusClearFiltersButton');
+  else if(action.includes('reset'))f.click('sdPlusResetButton');
+  else f.import(action==='import'?' {"minPrice":"25","maxPrice":"90"}':action==='invalid-import'?'null':'{');
+  const replacing=['clear','reset','import'].includes(action);f.tick(1000);
+  check(f.state.minPrice===(action==='import'?'25':replacing?'':'17')&&f.state.maxPrice===(action==='import'?'90':replacing?'':'77'),action+': correct final values');
+  check(f.writes.length===1&&f.writes[0].minPrice===f.state.minPrice&&f.writes[0].maxPrice===f.state.maxPrice,action+': exactly one save of final values');
+  check(f.errors.length===0,action+': no errors');f.close();
+ }
+ f=await fixture();f.input('minPrice','20');f.input('maxPrice','80');
+ const sort=f.d.querySelector('[data-setting="sortBy"]');sort.value='rating';sort.dispatchEvent(new f.w.Event('change',{bubbles:true}));f.tick(1000);
+ check(f.writes.length===1&&f.writes[0].minPrice==='20'&&f.writes[0].maxPrice==='80'&&f.events[0].key==='all','nontext change saves pending fields and processes all');
+ check(f.d.querySelector('[data-setting="minPrice"]').value==='20','nontext repopulation preserves edits');f.close();
+ f=await fixture();f.input('minPrice','30');f.input('maxPrice','60');f.d.getElementById('sdPlusNavMenu').remove();await Promise.resolve();await Promise.resolve();
+ check(f.d.querySelector('[data-setting="minPrice"]')?.value==='30','menu reinsertion preserves pending edits');
+ f.input('includeKeywords','lens');f.tick(600);check(f.writes.length===1&&f.writes[0].minPrice==='30'&&f.writes[0].maxPrice==='60'&&f.writes[0].includeKeywords==='lens','reinsertion retains one pending save');f.close();
+ const failed=results.filter(x=>!x.pass).length;document.getElementById('results').textContent=JSON.stringify({passed:results.length-failed,failed,results},null,2);
+})().catch(e=>document.getElementById('results').textContent=JSON.stringify({error:e.stack}));
+</script>
