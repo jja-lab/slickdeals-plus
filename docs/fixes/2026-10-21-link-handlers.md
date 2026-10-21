@@ -4,7 +4,7 @@ Forced processing previously attached another capture listener on each visit to 
 
 The existing WeakMap now owns listener removal/replacement. Each link-processing pass removes the previous handler and resolved destination before resolving its current href. Ordinary/unresolvable URLs retain no old bypass handler. Click-time bypass settings, destination parsing, processing order and noopener,noreferrer remain unchanged.
 
-Decision: [link handler lifecycle](../decisions/2026-10-21-link-handler-lifecycle.md), decided-in-flight pending JJ review.
+Decision: [link handler lifecycle](../decisions/2026-10-21-link-handler-lifecycle.md), accepted by JJ on 2026-10-21, including the separate settings-fix sequencing.
 
 Verification: actual Chrome fixture tests/link-handlers.html passes 19/19; exact pre-fix HEAD fa81d30 baseline passes8/fails11. Covers20 forced passes, nonforced/delta passes, immediate and reprocessed toggles, changed/ordinary/invalid destinations, independent anchors and isolation flags. window.open is intercepted in the fixture, so results count requests rather than visible retail tabs. Initial fixture incorrectly observed cancellation only in a bubble listener suppressed by production stopPropagation; fixed to inspect the dispatched event when that listener does not run. Reviewer found no blocking issue; direct valid-to-invalid and immediate-toggle cases added per review and rerun. Existing menu36/0 and filter31/0 regressions pass. Source syntax and diff checks pass.
 
