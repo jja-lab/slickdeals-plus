@@ -836,8 +836,9 @@
                             </div>
                         </li>`;
                         navBar.insertAdjacentHTML('beforeend', menuHTML);
-                        populateMenu();
                         setupEventListeners();
+                        // Populate the final controls: cloning a select resets its selected value.
+                        populateMenu();
                     } catch (e) {
                         log.error('insertMenu error:', e);
                     }
