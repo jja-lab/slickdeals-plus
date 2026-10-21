@@ -1287,6 +1287,13 @@
             if (card.dataset.sdpLinksProcessed) return;
             try {
                 card.querySelectorAll('a').forEach(link => {
+                    // Forced passes may revisit the same anchor with a changed URL.
+                    const previousHandler = linkClickHandlers.get(link);
+                    if (previousHandler) {
+                        link.removeEventListener('click', previousHandler, true);
+                        linkClickHandlers.delete(link);
+                    }
+                    delete link.dataset.resolvedHref;
                     if (LinkResolutionModule.isTrackingLink(link.href)) {
                         const dest = LinkResolutionModule.extractDestinationUrl(link.href);
                         if (dest) {
