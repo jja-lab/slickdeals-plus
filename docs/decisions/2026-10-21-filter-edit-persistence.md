@@ -13,3 +13,11 @@ Runner-up: per-field timers preserve delayed in-memory mutation, but cause multi
 Consequence: in-memory values (including export/debug or another processing event) can reflect input before the delayed save. Reloading within 600 ms can still lose unsaved input; immediate persistence/unload flushing is outside this fix. No alert enablement, score, storage format, dependency or API changes.
 
 Reversal: revert this focused commit; no data migration needed. Cost is restoring old behavior, including the reproduced loss. Affected surfaces: MenuModule input/change/reset/clear/import handlers and browser regression fixture. Review checkpoint: independent review plus fixed/baseline browser checks and live B persistence/restoration before local commit.
+
+## JJ review — accepted, 2026-10-21
+
+Current status: accepted. The original in-flight record above is preserved as history.
+
+Provenance: JJ explicitly stated in this chat, “Approve f06 decisions”, after reviewing the choices, tradeoffs, and verification results.
+
+Accepted scope: immediate in-memory field updates with combined persistence after 600 ms; accepted clear/reset/import actions cancel pending saves, while canceled/rejected actions preserve edits; retain the existing 600 ms persistence delay, including the limitation that immediate reload can lose unsaved input. Implementation: local commit 505d4b4. No supersession, additional implementation, push, or release authorized by this acceptance.

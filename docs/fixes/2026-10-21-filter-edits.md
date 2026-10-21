@@ -4,7 +4,7 @@ A shared debounced callback previously kept only the last field/value pair. Typi
 
 MenuModule now updates each field in memory immediately and debounces persistence of the combined settings. A module-owned timer survives menu reinsertion. Clear, confirmed reset and valid import cancel it; rejected/canceled actions retain it. A nontext change flushes pending fields and emits an all-settings event so filters are reprocessed.
 
-Decision: [filter edit persistence](../decisions/2026-10-21-filter-edit-persistence.md), decided-in-flight pending JJ review. The existing 600 ms delay remains; reload before that delay is not guaranteed to save input.
+Decision: [filter edit persistence](../decisions/2026-10-21-filter-edit-persistence.md), accepted by JJ on 2026-10-21 (explicit in-session approval). The existing 600 ms delay remains; reload before that delay is not guaranteed to save input.
 
 ## Verification
 
