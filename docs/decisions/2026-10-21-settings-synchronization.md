@@ -35,3 +35,18 @@ When the primary GM settings are unreadable, offer once per page, at the first f
 Accepting replaces the full state from the localStorage backup; declining keeps the Reset All/Import guidance. No automatic recovery is authorized.
 
 Not built now because the script never writes unreadable data itself (only an outside writer can), Reset All/Import already recover, and stored settings carry no saved-at time. The prompt therefore cannot say how old the backup is without a storage-format change. This records JJ's stated deferral rationale and future interaction scope; implementation and verification remain a later task.
+
+## JJ acceptance — 2026-10-21
+
+Status: accepted for the original synchronization choices, repair, and recovery deferral specified below. Provenance: JJ's explicit in-session ratification, quoted verbatim:
+
+> I ratify the settings-synchronization decisions (docs/decisions/2026-10-21-settings-synchronization.md), covering:
+> - the original choices at e244c5f: merge explicitly edited fields into the latest GM-first stored state at save time; refresh on menu opening without saving; Clear replaces only its seven filter keys while confirmed Reset and validated Import replace the full state; same-field conflicts are last successful save wins; unreadable or malformed primary storage blocks ordinary saves, with no automatic backup fallback;
+> - the repair at 63feba2: save-failure wording classified by read/prepare/write phase, and the focused-control guard plus conditional text-save repopulation;
+> - the confirmed-backup-recovery deferral recorded at 2131e9a (tracked as T2-393).
+>
+> N01 stays in flight; T3 live tuning stays a release gate, not part of this ratification.
+>
+> Append a dated acceptance section quoting this, preserving the original record, commit it locally, and do not push. Then close out the session.
+
+The original decision and repair/deferral history above are preserved. This acceptance authorizes no push, merge, publication, or implementation of T2-393. N01 remains in flight; T3 remains an outstanding release gate.
