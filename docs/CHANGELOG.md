@@ -11,6 +11,23 @@ Format: `[Version] - Date`
 
 ---
 
+## [Unreleased]
+
+Development builds retain the 33.0.0 version label until release preparation; these changes are not yet published through automatic updates.
+
+### Fixed
+- Preserve focused number-field editing state and caret during settings saves/refresh; avoid unnecessary text-save repopulation. Unreadable saved settings now point to Reset All or Import.
+- Saved menu selections populate after listener setup, preserving the displayed sensitivity and other saved choices.
+- **F06:** rapid edits across price and keyword fields save together; clear/reset/import cannot be undone by a queued save.
+- **F05:** forced processing replaces redirect handlers instead of accumulating them, and removes stale resolved destinations.
+- Settings saves merge explicitly edited fields with the latest stored values, preventing sequential stale-tab saves from overwriting unrelated Gold Tier, Glitch Alerts, threshold, and other settings. Menu opening refreshes remote values while retaining pending text edits. Clear affects filters only; reset/import remain explicit full replacements.
+
+### Limitations
+- Exactly simultaneous storage writes can still race. Idle tabs refresh on menu opening, saving, or reload; there is no continuous cross-tab listener.
+- The existing 600 ms text-save delay remains. An immediate reload can lose unsaved text.
+
+---
+
 ## [33.0.0] - 2026-06-06
 
 API-enriched rewrite for the Slickdeals frontpage React→Vue/Nuxt 3 migration, which renamed every card class and silently broke v32.3.9 (hardcoded selectors matched nothing). v33 re-anchors on the surviving `[data-threadid]` attribute and the unchanged JSON deal API.

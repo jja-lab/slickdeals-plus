@@ -1,0 +1,50 @@
+<!doctype html><meta charset="utf-8"><title>F05 link handler regression</title>
+<h1>Link handler regression</h1><pre id="results">Running…</pre>
+<script>
+(async()=>{
+ const baseline=new URLSearchParams(location.search).has('baseline');
+ const source=await(await fetch('../'+(baseline?'baseline.js':'slickdeals-plus-v33.0.0.js'))).text();
+ const prefix=source.slice(source.indexOf('    const ConstantsModule ='),source.indexOf('    // MODULE: Deal Data'));
+ const processing=source.slice(source.indexOf('    function ProcessingModule(context)'),source.indexOf('    const GlitchAlertModule ='));
+ const frame=document.createElement('iframe');document.body.append(frame);
+ const w=frame.contentWindow,d=w.document;
+ d.body.innerHTML='<ul><li><article data-threadid="42"><a class="dealCardGrid__title">Test deal</a><span class="dealCardVariant1__finalPrice">$10</span><span class="dealCardVariant1__listPrice">$100</span><span class="dealCardSocialControls__voteCount">50</span></article></li></ul>';
+ const link=d.querySelector('a'),card=d.querySelector('article');
+ const tracking=dest=>'https://slickdeals.net/click?u2='+encodeURIComponent(dest);
+ const a='https://example.test/first',b='https://example.test/second';link.href=tracking(a);
+ const opens=[],errors=[],results=[];w.open=(...args)=>opens.push(args);
+ const check=(ok,name)=>results.push({name,pass:!!ok});
+ let state;const context={settings:{getSettings:()=>state,getOriginalPosCounter:()=>0}};
+ const setup=w.Function('context','log',prefix+'\n'+processing+'\nreturn {module:ProcessingModule(context),defaults:ConstantsModule.DEFAULTS}')(context,{debug:()=>{},error:(...args)=>errors.push(args)});
+ state=JSON.parse(JSON.stringify(setup.defaults));
+ // Prevent fixture navigation in both enabled and fallback cases, recording
+ // whether the production handler already canceled the browser default action.
+ let prevented;link.addEventListener('click',e=>{prevented=e.defaultPrevented;e.preventDefault()});
+ const click=()=>{opens.length=0;prevented=undefined;const event=new w.MouseEvent('click',{bubbles:true,cancelable:true});link.dispatchEvent(event);if(prevented===undefined)prevented=event.defaultPrevented;return opens.slice()};
+ const pass=force=>setup.module.processAllCards(force);
+ await pass(false);let calls=click();
+ check(calls.length===1&&calls[0][0]===a,'initial click opens destination once');
+ check(prevented===true,'enabled bypass cancels default navigation');
+ check(calls[0]?.[1]==='_blank'&&calls[0]?.[2]==='noopener,noreferrer','retains target and isolation flags');
+ for(let i=0;i<20;i++)await pass(true);
+ calls=click();check(calls.length===1,'twenty forced passes still open exactly once');
+ await pass(false);await setup.module.processCards([card]);check(click().length===1,'nonforced and delta passes do not duplicate');
+ state.bypassRedirects=false;check(click().length===0&&prevented===false,'off applies immediately without reprocessing');
+ state.bypassRedirects=true;check(click().length===1,'on applies immediately without reprocessing');
+ state.bypassRedirects=false;await pass(true);check(click().length===0&&prevented===false,'off leaves native navigation untouched');
+ state.bypassRedirects=true;await pass(true);check(click().length===1,'on off on retains one open');
+ link.href=tracking(b);await pass(true);calls=click();check(calls.length===1&&calls[0][0]===b,'changed tracking href opens only current destination');
+ check(link.dataset.resolvedHref===b,'resolved destination reflects current href');
+ link.href='https://example.test/direct';await pass(true);check(click().length===0&&prevented===false,'ordinary href removes old bypass');
+ check(!('resolvedHref' in link.dataset),'ordinary href clears resolved marker');
+ link.href=tracking(b);await pass(true);
+ link.href='https://slickdeals.net/click?u2=javascript%3Aalert(1)';await pass(true);check(click().length===0&&prevented===false,'invalid destination cannot reuse old handler');
+ check(!('resolvedHref' in link.dataset),'invalid destination clears resolved marker');
+ link.href=tracking(a);await pass(true);check(click().length===1,'valid href recovers exactly one handler');
+ const other=d.createElement('a');other.href=tracking(b);other.textContent='Other link';card.append(other);other.addEventListener('click',e=>e.preventDefault());await pass(true);
+ opens.length=0;other.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));check(opens.length===1&&opens[0][0]===b,'separate anchors have independent handlers');
+ check(click().length===1,'adding another anchor does not duplicate original');
+ check(!context.isProcessing&&errors.length===0,'processing unlocks without errors');
+ frame.remove();const failed=results.filter(r=>!r.pass).length;document.getElementById('results').textContent=JSON.stringify({passed:results.length-failed,failed,results},null,2);
+})().catch(e=>document.getElementById('results').textContent=JSON.stringify({error:e.stack}));
+</script>

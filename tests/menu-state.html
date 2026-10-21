@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Slickdeals+ menu state regression</title>
+<h1>Menu state regression</h1>
+<pre id="results">Running…</pre>
+<script>
+(async () => {
+  // Serve the repository root over HTTP and open tests/menu-state.html in Chrome.
+  // Each case runs the real MenuModule in a fresh DOM, without the live site or GM storage.
+  const source = await (await fetch('../slickdeals-plus-v33.0.0.js')).text();
+  let moduleSource = source.slice(source.indexOf('    function MenuModule(context) {'),
+    source.indexOf('    function StylesModule(context) {'));
+  // Negative control: exercise the previous initialization order using identical cases.
+  if (new URLSearchParams(location.search).has('baseline')) {
+    const fixedModule = moduleSource;
+    moduleSource = moduleSource.replace(
+      /setupEventListeners\(\);\s*\/\/ Populate the final controls:[^\n]*\n\s*populateMenu\(\);/,
+      'populateMenu();\nsetupEventListeners();');
+    if (moduleSource === fixedModule) throw new Error('Baseline transformation did not match');
+  }
+  const results = [];
+  function check(condition, name) { results.push({name, pass: !!condition}); }
+  for (const [sensitivity, sort] of [['low','default'], ['medium','discount'], ['high','rating']]) {
+    const frame = document.createElement('iframe');
+    document.body.append(frame);
+    const w = frame.contentWindow, d = w.document;
+    d.body.innerHTML = '<ul id="nav"></ul>';
+    const settings = {glitchSensitivity:sensitivity, sortBy:sort, glitchAlerts:false,
+      hidePromoted:true, minPrice:'12', includeKeywords:'test'};
+    let saves = 0, events = 0;
+    const errors = [];
+    const context = {settings:{getSettings:()=>settings, saveSettings:()=>saves++},
+      eventBus:{emit:()=>events++}};
+    const menu = w.Function('UtilsModule','ConstantsModule','log','context',
+      moduleSource + '\nreturn MenuModule(context);')(
+        {waitForElement:async()=>d.querySelector('#nav'), debounce:fn=>fn},
+        {SELECTORS:{navBar:'#nav'}},
+        {error:(...args)=>errors.push(args.join(' ')), warn:()=>{}, debug:()=>{}},context);
+    const input = key=>d.querySelector(`[data-setting="${key}"]`);
+    await menu.createMenu();
+    for (const phase of ['initial','reinserted']) {
+      check(input('glitchSensitivity').value === sensitivity, `${sensitivity}/${phase}: sensitivity`);
+      check(input('sortBy').value === sort, `${sensitivity}/${phase}: sorting`);
+      check(!input('glitchAlerts').checked, `${sensitivity}/${phase}: alerts off`);
+      check(input('hidePromoted').checked && input('minPrice').value === '12' &&
+        input('includeKeywords').value === 'test', `${sensitivity}/${phase}: other controls`);
+      check(saves === 0 && events === 0, `${sensitivity}/${phase}: no initialization writes`);
+      if (phase === 'initial') {
+        d.querySelector('#sdPlusNavMenu').remove();
+        await new Promise(resolve=>w.setTimeout(resolve,0));
+      }
+    }
+    await menu.createMenu(); // Calling createMenu again must not duplicate listeners.
+    const select = input('glitchSensitivity');
+    select.value = sensitivity === 'high' ? 'low' : 'high';
+    select.dispatchEvent(new w.Event('change',{bubbles:true}));
+    check(settings.glitchSensitivity === select.value && saves === 1 && events === 1,
+      `${sensitivity}: change persists once`);
+    check(errors.length === 0, `${sensitivity}: no module errors`);
+    frame.remove();
+  }
+  const failed = results.filter(r=>!r.pass).length;
+  window.testResults = {passed:results.length-failed, failed, results};
+  document.querySelector('#results').textContent = JSON.stringify(window.testResults,null,2);
+})().catch(error=>{document.querySelector('#results').textContent=error.stack;window.testResults={error:String(error)};});
+</script>
