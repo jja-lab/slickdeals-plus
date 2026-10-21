@@ -1,0 +1,73 @@
+<!doctype html><meta charset="utf-8"><title>Settings synchronization regression</title>
+<h1>Settings synchronization regression</h1><pre id="results">Running…</pre>
+<script>
+(async()=>{
+ const source=await(await fetch('../'+(new URLSearchParams(location.search).has('baseline')?'baseline.js':'slickdeals-plus-v33.0.0.js'))).text();
+ const prefix=source.slice(source.indexOf('    const ConstantsModule ='),source.indexOf('    // MODULE: Link'));
+ const modules=source.slice(source.indexOf('    function SettingsModule()'),source.indexOf('    function StylesModule(context)'));
+ const key='sdPlus_settings_master',results=[];const check=(v,name)=>results.push({name,pass:!!v});
+ let gm,local,failRead=false,failWrite=false,failLocal=false,writes,frames=[];
+ function reset(){frames.forEach(f=>f.remove());frames=[];gm=new Map();local=new Map();writes=[];failRead=failWrite=failLocal=false}
+ async function tab(noGM=false){
+  const frame=document.createElement('iframe');document.body.append(frame);frames.push(frame);const w=frame.contentWindow,d=w.document;
+  d.body.innerHTML='<ul class="slickdealsHeader__linkSection"></ul>';
+  let now=0,id=0;const timers=new Map();w.setTimeout=(fn,ms)=>{timers.set(++id,{fn,at:now+ms});return id};w.clearTimeout=id=>timers.delete(id);
+  const tick=ms=>{const end=now+ms;while(true){const t=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!t)break;timers.delete(t[0]);now=t[1].at;t[1].fn()}now=end};
+  const events=[],errors=[],toasts=[],log={info(){},debug(){},warn(){},error:(...a)=>errors.push(a)};
+  const setup=w.Function('log','ToastModule','GM_getValue','GM_setValue','localStorage',prefix+'\n'+modules+'\nreturn {settings:SettingsModule(),MenuModule,defaults:ConstantsModule.DEFAULTS}')(log,{show:(...args)=>toasts.push(args)},noGM?undefined:k=>{if(failRead)throw Error('read failure');return gm.get(k)},noGM?undefined:(k,v)=>{if(failWrite)throw Error('write failure');gm.set(k,v);writes.push(JSON.parse(v))},{getItem:k=>{if(failLocal)throw Error('local failure');return local.get(k)},setItem:(k,v)=>{if(failLocal)throw Error('local failure');local.set(k,v)}});
+  setup.settings.loadSettings();const context={settings:setup.settings,eventBus:{emit:(name,data)=>events.push(data)}};const menu=setup.MenuModule(context);await menu.createMenu();
+  const input=(k,v)=>{const e=d.querySelector(`[data-setting="${k}"]`);e.value=v;e.dispatchEvent(new w.Event('input',{bubbles:true}))};
+  const change=(k,v)=>{const e=d.querySelector(`[data-setting="${k}"]`);if(e.type==='checkbox')e.checked=v;else e.value=v;e.dispatchEvent(new w.Event('change',{bubbles:true}))};
+  let importText;w.HTMLInputElement.prototype.click=function(){if(this.type==='file')this.onchange({target:{files:[{}]}})};w.FileReader=class{readAsText(){this.onload({target:{result:importText}})}};
+  return {w,d,events,errors,toasts,tick,input,change,settings:setup.settings,defaults:setup.defaults,state:()=>setup.settings.getSettings(),click:id=>d.getElementById(id).click(),open:()=>d.querySelector('.sd-plus-menu-button').click(),import:text=>{importText=text;d.getElementById('sdPlusImportButton').click()}};
+ }
+ const stored=()=>JSON.parse(gm.get(key)||local.get(key));
+ reset();let a=await tab(),b=await tab();let identity=b.state();
+ a.change('goldTierOnly',true);a.change('glitchAlerts',true);a.change('highlightDiff','10');b.change('sortBy','rating');
+ check(stored().goldTierOnly&&stored().glitchAlerts&&stored().highlightDiff===10&&stored().sortBy==='rating','stale unrelated save preserves newer Gold/Glitch/threshold');
+ check(identity===b.state(),'merge preserves settings object identity');
+ check(b.d.querySelector('[data-setting="goldTierOnly"]').checked&&b.d.querySelector('[data-setting="glitchAlerts"]').checked,'merged values repopulate controls');
+ check(b.events.at(-1).key==='all','adopted remote fields trigger all-settings processing');
+ check(gm.get(key)===local.get(key),'primary and backup stores agree');
+ a.change('goldTierOnly',false);a.change('glitchAlerts',false);a.change('highlightDiff','50');b.change('sortBy','default');
+ check(!stored().goldTierOnly&&!stored().glitchAlerts&&stored().highlightDiff===50,'stale save cannot resurrect enabled state');
+ reset();a=await tab();a.change('goldTierOnly',true);a.change('glitchAlerts',true);a.change('highlightDiff','10');b=await tab();a.change('goldTierOnly',false);a.change('glitchAlerts',false);a.change('highlightDiff','50');b.change('sortBy','rating');check(!stored().goldTierOnly&&!stored().glitchAlerts&&stored().highlightDiff===50,'independently initialized stale enabled tab cannot resurrect remote off values');
+ reset();a=await tab();b=await tab();a.input('minPrice','20');a.tick(600);b.input('minPrice','5');b.input('minPrice','');b.input('maxPrice','80');b.open();
+ check(b.state().minPrice===''&&b.state().maxPrice==='80','menu refresh preserves explicit pending text including return to original');b.tick(600);
+ check(stored().minPrice===''&&stored().maxPrice==='80','pending text intent overrides remote same field');
+ a.change('glitchAlerts',true);b.input('includeKeywords','camera');b.change('sortBy','rating');b.tick(1000);
+ check(stored().glitchAlerts&&stored().includeKeywords==='camera','nontext save flushes text and preserves remote alert setting');
+ reset();a=await tab();b=await tab();a.change('freeOnly',true);b.change('goldTierOnly',true);
+ check(stored().goldTierOnly&&!stored().freeOnly,'Gold enable clears newer remote Free');a.change('freeOnly',true);
+ check(stored().freeOnly&&!stored().goldTierOnly,'Free enable clears newer remote Gold');
+ reset();a=await tab();b=await tab();a.change('glitchAlerts',true);a.change('highlightDiff','10');a.change('goldTierOnly',true);a.input('minPrice','25');a.tick(600);b.click('sdPlusClearFiltersButton');
+ check(!stored().goldTierOnly&&stored().minPrice===''&&stored().glitchAlerts&&stored().highlightDiff===10,'Clear replaces filters only, including unchanged local keys');
+ b.w.confirm=()=>true;b.click('sdPlusResetButton');check(!stored().glitchAlerts&&stored().highlightDiff===50,'Reset explicitly replaces remote settings');
+ a.change('glitchAlerts',true);b.import('{"highlightDiff":30}');check(!stored().glitchAlerts&&stored().highlightDiff===30,'valid import explicitly replaces full state');
+ b.input('minPrice','12');b.import('null');b.tick(600);check(stored().minPrice==='12','rejected import retains pending edits');
+ reset();a=await tab();b=await tab();a.change('glitchAlerts',true);const count=writes.length;b.open();
+ check(b.state().glitchAlerts&&b.d.querySelector('[data-setting="glitchAlerts"]').checked,'opening menu refreshes remote settings');
+ check(writes.length===count,'menu refresh performs no persistence');
+ b.input('maxPrice','90');a.input('minPrice','10');a.tick(600);b.d.getElementById('sdPlusNavMenu').remove();await Promise.resolve();await Promise.resolve();b.tick(600);
+ check(stored().minPrice==='10'&&stored().maxPrice==='90','menu reinsertion retains pending text and merges remote fields');
+ reset();a=await tab();b=await tab();a.state().glitchKeywords.A.push('new term');a.settings.saveSettings();b.change('sortBy','rating');
+ check(stored().glitchKeywords.A.includes('new term'),'deep remote watchlist edits survive stale save');
+ b.state().glitchKeywords.B.push('local term');b.settings.saveSettings();check(stored().glitchKeywords.B.includes('local term'),'deep local watchlist edits detected');
+ reset();a=await tab();a.change('goldTierOnly',true);a.change('glitchAlerts',true);failRead=true;b=await tab();failRead=false;b.change('sortBy','rating');check(stored().goldTierOnly&&stored().glitchAlerts&&stored().sortBy==='rating','startup read failure defaults are not treated as edits');
+ reset();failWrite=true;b=await tab();failWrite=false;a=await tab();a.change('glitchAlerts',true);b.change('sortBy','rating');check(stored().glitchAlerts&&stored().sortBy==='rating','failed initial default write does not overwrite later remote changes');
+ reset();a=await tab();b=await tab();a.change('glitchAlerts',true);const before=gm.get(key);failRead=true;b.change('sortBy','rating');check(gm.get(key)===before,'unreadable primary aborts save');failRead=false;b.settings.saveSettings();check(stored().glitchAlerts&&stored().sortBy==='rating','read failure retry retains local edit and newer remote fields');
+ reset();a=await tab();b=await tab();a.input('minPrice','25');a.tick(600);failWrite=true;b.input('minPrice','');b.tick(600);check(stored().minPrice==='25','failed write leaves persisted state intact');failWrite=false;a.change('glitchAlerts',true);b.settings.saveSettings();check(stored().minPrice===''&&stored().glitchAlerts,'failed write retains explicit same-valued intent without losing remote edits');
+ reset();a=await tab();b=await tab();gm.set(key,'{');b.change('sortBy','rating');check(gm.get(key)==='{','malformed primary blocks ordinary stale overwrite');b.w.confirm=()=>true;b.click('sdPlusResetButton');check(stored().sortBy==='default','explicit reset repairs corrupt storage');
+ for(const raw of ['null','[]']) { reset();a=await tab();gm.set(key,raw);a.change('sortBy','rating');check(gm.get(key)===raw,'invalid primary root blocks overwrite: '+raw); }
+ for(const action of ['reset','import']) {
+  reset();a=await tab();b=await tab();a.change('glitchAlerts',true);failWrite=true;b.w.confirm=()=>true;
+  if(action==='reset')b.click('sdPlusResetButton');else b.import('{"highlightDiff":30}');
+  check(stored().glitchAlerts&&!b.toasts.some(t=>t[1]==='success'),action+' failure reports no success');failWrite=false;b.open();b.settings.saveSettings();
+  check(!stored().glitchAlerts&&stored().highlightDiff===(action==='reset'?50:30),action+' failure retains full replacement intent across refresh and retry');
+ }
+ reset();a=await tab(true);b=await tab(true);a.change('glitchAlerts',true);b.change('sortBy','rating');check(stored().glitchAlerts&&stored().sortBy==='rating','local-only fallback merges stale edits');
+ const localBefore=local.get(key);failLocal=true;b.input('minPrice','7');b.tick(600);failLocal=false;check(local.get(key)===localBefore,'local-only failure leaves store intact');b.settings.saveSettings();check(stored().minPrice==='7','local-only failure can retry pending edits');
+ reset();a=await tab();failLocal=true;a.change('glitchAlerts',true);failLocal=false;check(stored().glitchAlerts,'GM success tolerates unavailable backup');
+ reset();const failed=results.filter(r=>!r.pass).length;document.getElementById('results').textContent=JSON.stringify({passed:results.length-failed,failed,results},null,2);
+})().catch(e=>document.getElementById('results').textContent=JSON.stringify({error:e.stack}));
+</script>

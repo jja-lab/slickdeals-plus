@@ -28,6 +28,14 @@
  * - [ ] Filter presets (save/load combinations)
  * - [ ] Block ad iframes from loading entirely (prevent zombie ads at source)
  *
+ * UNRELEASED (development build; version label remains 33.0.0 until publication):
+ * - Fix saved menu selections after listener setup.
+ * - F06: preserve rapid multi-field edits; bulk actions cancel pending saves.
+ * - F05: replace duplicate redirect handlers and clear stale destinations.
+ * - Merge edited settings with newer stored fields; refresh on menu opening.
+ *   Clear affects filters only; reset/import replace all. Simultaneous writes can
+ *   still race, and the existing 600 ms text-save delay remains.
+ *
  * CHANGELOG v33.0.0:
  * - [BREAKING-FIX] Slickdeals migrated the frontpage React → Vue/Nuxt 3, renaming every
  *   card CSS class. v32.3.9's hardcoded selectors all missed → script silently no-op'd.
@@ -607,6 +615,8 @@
     // ============================================
     function SettingsModule() {
         let settings = null;
+        let savedSnapshot = null;
+        const pendingSaveKeys = new Set();
         let originalPosCounter = 0;
         const STORAGE_KEY = 'sdPlus_settings_master';
         const LEGACY_KEYS = ['sdPlus_settings_v32', 'sdPlus_settings_v31', 'sdPlus_settings_v30', 'sdPlus_settings_v28'];
@@ -646,16 +656,17 @@
                     const parsed = JSON.parse(raw);
                     const validation = ValidationModule.validateSettings(parsed, ConstantsModule.DEFAULTS);
                     settings = validation.settings;
+                    savedSnapshot = JSON.parse(JSON.stringify(settings));
                     log.info('Settings loaded:', Object.keys(settings).length, 'keys');
                     if (migratedFrom) {
-                        saveSettings();
+                        saveSettings({ replace: true });
                         // Delay toast to avoid init issues
                         setTimeout(() => ToastModule.show('Settings migrated', 'success', 2000), 1000);
                     }
                 } else {
                     settings = { ...ConstantsModule.DEFAULTS };
                     log.info('Using defaults');
-                    saveSettings();
+                    saveSettings({ replace: true });
                 }
             } catch (e) {
                 log.error('Load error:', e);
@@ -666,15 +677,52 @@
             if (!settings) {
                 settings = { ...ConstantsModule.DEFAULTS };
             }
+            // Defaults shown after a failed load are not user edits.
+            if (!savedSnapshot) savedSnapshot = JSON.parse(JSON.stringify(settings));
         }
 
-        function saveSettings() {
+        // Reconcile at the save boundary; untouched stale fields never replace newer ones.
+        function mergeLatest(keys = []) {
+            const rawGM = typeof GM_getValue === 'function' ? GM_getValue(STORAGE_KEY) : null;
+            const raw = rawGM || localStorage.getItem(STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (raw && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))) throw new Error('Invalid stored settings object');
+            const latest = raw
+                ? ValidationModule.validateSettings(parsed, ConstantsModule.DEFAULTS).settings
+                : (savedSnapshot || settings);
+            const edited = new Set([...pendingSaveKeys, ...keys]);
+            for (const key of Object.keys(ConstantsModule.DEFAULTS)) {
+                if (JSON.stringify(settings[key]) !== JSON.stringify(savedSnapshot?.[key])) edited.add(key);
+            }
+            const merged = { ...latest };
+            edited.forEach(key => { if (key in ConstantsModule.DEFAULTS) merged[key] = settings[key]; });
+            return { latest, merged };
+        }
+
+        function refreshSettings(keys = []) {
+            if (!settings) loadSettings();
+            try {
+                const { latest, merged } = mergeLatest(keys);
+                const changed = JSON.stringify(settings) !== JSON.stringify(merged);
+                Object.assign(settings, merged);
+                savedSnapshot = JSON.parse(JSON.stringify(latest));
+                return changed;
+            } catch (e) {
+                log.warn('Settings refresh failed; keeping local edits:', e);
+                return false;
+            }
+        }
+
+        function saveSettings({ keys = [], replace = false } = {}) {
+            keys.forEach(key => pendingSaveKeys.add(key));
             if (!settings) {
                 log.warn('Cannot save - settings is null');
                 return;
             }
             try {
-                const json = JSON.stringify(settings);
+                const next = replace ? settings : mergeLatest(keys).merged;
+                const changed = JSON.stringify(settings) !== JSON.stringify(next);
+                const json = JSON.stringify(next);
 
                 // Save to GM storage
                 if (typeof GM_setValue === 'function') {
@@ -684,14 +732,22 @@
                 // Also save to localStorage as backup
                 try {
                     localStorage.setItem(STORAGE_KEY, json);
-                } catch { /* localStorage may be blocked */ }
+                } catch (e) {
+                    if (typeof GM_setValue !== 'function') throw e;
+                }
 
                 // Sync debug toggle to localStorage for pre-init access
-                try { localStorage.setItem('sdPlus_debug', String(settings.debugMode)); } catch {}
+                try { localStorage.setItem('sdPlus_debug', String(next.debugMode)); } catch {}
 
+                Object.assign(settings, next);
+                savedSnapshot = JSON.parse(json);
+                pendingSaveKeys.clear();
                 log.debug('Settings saved');
+                return { saved: true, changed };
             } catch (e) {
                 log.error('Save error:', e);
+                ToastModule.show('Settings could not be saved. Please retry.', 'error');
+                return { saved: false, changed: false };
             }
         }
 
@@ -704,6 +760,7 @@
         return {
             loadSettings,
             saveSettings,
+            refreshSettings,
             getSettings,
             getOriginalPosCounter: () => originalPosCounter++,
             debugDump: () => {
@@ -786,6 +843,7 @@
         let documentClickHandler = null;
         let documentKeydownHandler = null;
         let textSaveTimer = null;
+        const pendingTextKeys = new Set();
 
         function cancelTextSave() {
             clearTimeout(textSaveTimer);
@@ -935,9 +993,13 @@
                         s[key] = value;
                         if (key === 'freeOnly' && value) s.goldTierOnly = false;
                         if (key === 'goldTierOnly' && value) s.freeOnly = false;
+                        const keys = [key, ...pendingTextKeys];
+                        if (key === 'freeOnly' && value) keys.push('goldTierOnly');
+                        if (key === 'goldTierOnly' && value) keys.push('freeOnly');
+                        const result = context.settings.saveSettings({ keys });
+                        if (result?.saved !== false) pendingTextKeys.clear();
                         populateMenu();
-                        context.settings.saveSettings();
-                        context.eventBus.emit('settingsChanged', { key: hadPendingText ? 'all' : key, value, allSettings: s });
+                        context.eventBus.emit('settingsChanged', { key: hadPendingText || result?.changed ? 'all' : key, value, allSettings: s });
                     } catch (err) {
                         log.error('Setting change error:', err);
                     }
@@ -948,7 +1010,9 @@
                     textSaveTimer = null;
                     try {
                         const s = context.settings.getSettings();
-                        context.settings.saveSettings();
+                        const result = context.settings.saveSettings({ keys: [...pendingTextKeys] });
+                        if (result?.saved !== false) pendingTextKeys.clear();
+                        populateMenu();
                         context.eventBus.emit('settingsChanged', { key: 'all', allSettings: s });
                     } catch (err) {
                         log.error('Debounced save error:', err);
@@ -959,6 +1023,7 @@
                     const key = e.target.dataset.setting;
                     if (['excludeKeywords', 'includeKeywords', 'minPrice', 'maxPrice'].includes(key)) {
                         context.settings.getSettings()[key] = e.target.value;
+                        pendingTextKeys.add(key);
                         cancelTextSave();
                         textSaveTimer = setTimeout(saveTextFields, 600);
                     }
@@ -972,10 +1037,11 @@
                             cancelTextSave();
                             const s = context.settings.getSettings();
                             Object.assign(s, { freeOnly: false, goldTierOnly: false, minPrice: '', maxPrice: '', excludeKeywords: '', includeKeywords: '', sortBy: 'default' });
+                            const result = context.settings.saveSettings({ keys: ['freeOnly', 'goldTierOnly', 'minPrice', 'maxPrice', 'excludeKeywords', 'includeKeywords', 'sortBy'] });
+                            if (result?.saved !== false) pendingTextKeys.clear();
                             populateMenu();
-                            context.settings.saveSettings();
                             context.eventBus.emit('settingsChanged', { key: 'all', allSettings: s });
-                            ToastModule.show('Filters cleared', 'success');
+                            if (result?.saved !== false) ToastModule.show('Filters cleared', 'success');
                         } catch (err) {
                             log.error('Clear filters error:', err);
                         }
@@ -991,10 +1057,11 @@
                                 cancelTextSave();
                                 const s = context.settings.getSettings();
                                 Object.assign(s, ConstantsModule.DEFAULTS);
+                                const result = context.settings.saveSettings({ replace: true, keys: Object.keys(ConstantsModule.DEFAULTS) });
+                                if (result?.saved !== false) pendingTextKeys.clear();
                                 populateMenu();
-                                context.settings.saveSettings();
                                 context.eventBus.emit('settingsChanged', { key: 'all', allSettings: s });
-                                ToastModule.show('Settings reset', 'success');
+                                if (result?.saved !== false) ToastModule.show('Settings reset', 'success');
                             } catch (err) {
                                 log.error('Reset error:', err);
                             }
@@ -1039,16 +1106,19 @@
                                             ToastModule.show('Import failed', 'error');
                                             return;
                                         }
-                                        if (validation.warnings.length) {
-                                            ToastModule.show(`Imported with ${validation.warnings.length} warning(s)`, 'warning');
-                                        } else {
-                                            ToastModule.show('Settings imported', 'success');
-                                        }
                                         cancelTextSave();
                                         Object.assign(context.settings.getSettings(), validation.settings);
+                                        const result = context.settings.saveSettings({ replace: true, keys: Object.keys(ConstantsModule.DEFAULTS) });
+                                        if (result?.saved !== false) pendingTextKeys.clear();
                                         populateMenu();
-                                        context.settings.saveSettings();
                                         context.eventBus.emit('settingsChanged', { key: 'all', allSettings: context.settings.getSettings() });
+                                        if (result?.saved !== false) {
+                                            if (validation.warnings.length) {
+                                                ToastModule.show(`Imported with ${validation.warnings.length} warning(s)`, 'warning');
+                                            } else {
+                                                ToastModule.show('Settings imported', 'success');
+                                            }
+                                        }
                                     } catch {
                                         ToastModule.show('Import failed', 'error');
                                     }
@@ -1080,6 +1150,11 @@
                     btn.parentNode.replaceChild(newBtn, btn);
                     newBtn.addEventListener('click', e => {
                         e.stopPropagation();
+                        if (!menuContainer.classList.contains('menu-open')) {
+                            const changed = context.settings.refreshSettings?.([...pendingTextKeys]);
+                            populateMenu();
+                            if (changed) context.eventBus.emit('settingsChanged', { key: 'all', allSettings: context.settings.getSettings() });
+                        }
                         menuContainer.classList.toggle('menu-open');
                     });
                 }
