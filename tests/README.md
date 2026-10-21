@@ -4,10 +4,10 @@ Run these in Chrome. Fixtures extract actual modules from the userscript and use
 
 ## Serve and run
 
-From this worktree:
+From anywhere inside your repository checkout:
 
 ```sh
-WT="/Users/jjatkinson/Documents/Projects/astra-orchestrator/.astra/worktrees/20261005-200544-slickdeals-fix1-49854f8c"
+WT="$(git rev-parse --show-toplevel)"
 cd "$WT"
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
@@ -57,7 +57,9 @@ For the unchanged menu/filter/link suites against exact e244c5f, copy `repair-ba
 
 ## Retained evidence
 
-Hub evidence directory:
+The original evidence is an external, machine-local record, not a repository dependency or a required location for running these fixtures. Save new result JSON in a location of your choosing.
+
+Historical location on the original test machine (reference only):
 `/Users/jjatkinson/Documents/Projects/astra-orchestrator/.astra/preparations/20261021-slickdeals-browser/`
 
 Original pairs: `menu-{fixed,baseline}-results.json`, `f06-{fixed,baseline}-results.json`, `f05-{fixed,baseline}-results.json`, `sync-{fixed,baseline}-results.json`. Latest pre-repair regressions: `sync-menu-state-results.json`, `sync-filter-edits-results.json`, `sync-link-handlers-results.json`.

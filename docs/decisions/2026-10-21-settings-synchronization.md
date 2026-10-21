@@ -23,3 +23,15 @@ Implementation choice: classify save failures by read/prepare/write phase. Read/
 Focused controls retain their DOM editing state until a later population while unfocused; other controls still refresh normally. This follows JJ's exact activeElement constraint. The setter-count fixture tests actual assignments (including equal values), with explicit focus setup checks; native partial-number sequences remain the acceptance check for browser transient text.
 
 Alternative: silently use localStorage after primary corruption was rejected by JJ's explicit no-fallback scope and the risk of promoting stale backup values. Full input buffering/caret reconstruction is unnecessary for the bounded focus guard. Revert the repair commit to undo these changes, at the cost of returning the partial-input bug and misleading corruption wording; no migration/dependency change. Ratification checkpoint: review the repair results and the original synchronization semantics together. N01/T3 remain separate unresolved matters.
+
+## Deferred follow-up — confirmed backup recovery (JJ deferred, 2026-10-21)
+
+JJ explicitly deferred this follow-up; tracked in the orchestrator backlog as T2-393. It is not implemented by this documentation change, and this deferral does not ratify the earlier in-flight decisions.
+
+When the primary GM settings are unreadable, offer once per page, at the first failed ordinary save (never at page load, never automatically):
+
+> Saved settings are unreadable. Restore the backup copy? It may be older than your last change.
+
+Accepting replaces the full state from the localStorage backup; declining keeps the Reset All/Import guidance. No automatic recovery is authorized.
+
+Not built now because the script never writes unreadable data itself (only an outside writer can), Reset All/Import already recover, and stored settings carry no saved-at time. The prompt therefore cannot say how old the backup is without a storage-format change. This records JJ's stated deferral rationale and future interaction scope; implementation and verification remain a later task.
